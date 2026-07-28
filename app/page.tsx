@@ -17,6 +17,9 @@ type SiteSettings = {
   announcement: string;
   shippingFee: number;
   freeShippingThreshold: number;
+  shipping60: number;
+  shipping90: number;
+  shipping120: number;
   heroKicker: string;
   heroTitle1: string;
   heroTitle2: string;
@@ -84,6 +87,9 @@ const defaultSettings: SiteSettings = {
   announcement: "",
   shippingFee: 120,
   freeShippingThreshold: 999,
+  shipping60: 180,
+  shipping90: 245,
+  shipping120: 310,
   heroKicker: "餐廳級熟製 · 冷凍宅配",
   heroTitle1: "KUANS LAB 寬私廚",
   heroTitle2: "餐廳等級料理，在家也能輕鬆享用",
@@ -107,6 +113,18 @@ const defaultSettings: SiteSettings = {
   bankAccountName: "餐飲企業社",
   footerText: "把餐廳等級的料理，帶進每一天的餐桌。",
 };
+
+function calculateBoxShipping(quantity: number, settings: SiteSettings) {
+  if (quantity <= 0) return 0;
+  const fullBoxes = Math.floor(quantity / 20);
+  const remainder = quantity % 20;
+  let total = fullBoxes * settings.shipping120;
+  if (remainder === 0) return total;
+  if (remainder <= 6) total += settings.shipping60;
+  else if (remainder <= 10) total += settings.shipping90;
+  else total += settings.shipping120;
+  return total;
+}
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -138,7 +156,7 @@ export default function Home() {
   const quantity = Object.values(counts).reduce((sum, count) => sum + count, 0);
   const subtotal = items.reduce((sum, item) => sum + item.price * counts[item.id], 0);
   const shipping = delivery === "宅配" && subtotal > 0 && subtotal < siteSettings.freeShippingThreshold
-    ? siteSettings.shippingFee
+    ? calculateBoxShipping(quantity, siteSettings)
     : 0;
 
   useEffect(() => {
@@ -480,6 +498,27 @@ export default function Home() {
                 </div>
                 <p className="payment-alert">‼️ 如已匯款，請至 LINE 訊息告知帳號後五碼 ‼️</p>
                 <p className="privacy-note">確認後，訂單會寫入 KUANS LAB 訂單系統並開啟官方 LINE。</p>
+                <div className="checkout-box-guide" aria-label="黑貓宅急便分箱運費">
+                  <div className="checkout-box-guide-head">
+                    <b>黑貓宅急便・分箱運費</b>
+                    <span>含包材費</span>
+                  </div>
+                  <div className="checkout-box-grid">
+                    <div>
+                      <div className="box-drawing box-small" aria-hidden="true"><span /><i /><b>60</b></div>
+                      <strong>1–6 件</strong><small>NT$ {siteSettings.shipping60.toLocaleString("zh-TW")}</small>
+                    </div>
+                    <div>
+                      <div className="box-drawing box-medium" aria-hidden="true"><span /><i /><b>90</b></div>
+                      <strong>7–10 件</strong><small>NT$ {siteSettings.shipping90.toLocaleString("zh-TW")}</small>
+                    </div>
+                    <div>
+                      <div className="box-drawing box-large" aria-hidden="true"><span /><i /><b>120</b></div>
+                      <strong>11–20 件</strong><small>NT$ {siteSettings.shipping120.toLocaleString("zh-TW")}</small>
+                    </div>
+                  </div>
+                  <p>超過 20 件會自動分箱並累加計算。</p>
+                </div>
               </section>
             )}
           </div>
