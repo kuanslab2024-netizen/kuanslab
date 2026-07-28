@@ -62,6 +62,7 @@ h1 em { color: var(--orange); font-style: normal; }
 .catalog-message { grid-column: 1 / -1; margin: 0; padding: 65px 24px; border: 1px solid var(--line); background: var(--paper); color: #68736d; text-align: center; }
 .product-card { background: var(--paper); border: 1px solid var(--line); transition: transform .25s, box-shadow .25s; }
 .product-card:hover { transform: translateY(-6px); box-shadow: 0 20px 50px rgba(28, 50, 40, .12); }
+.product-preview { display: block; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
 .product-photo { height: 295px; position: relative; background: url("/kuanslab/beef-noodle-hero.png") 67% 50%/cover; overflow: hidden; }
 .card-2 .product-photo { background-position: 76% 48%; filter: saturate(.9) brightness(.93); }
 .card-3 .product-photo { background-position: 57% 70%; filter: sepia(.08); }
@@ -79,6 +80,9 @@ h1 em { color: var(--orange); font-style: normal; }
 .tag { position: absolute; top: 18px; left: 18px; padding: 7px 11px; background: var(--orange); color: white; font-size: 12px; font-weight: 700; }
 .photo-index { position: absolute; right: 15px; bottom: 8px; color: rgba(255,255,255,.8); font: 40px Georgia, serif; }
 .product-info { padding: 25px; }
+.product-summary { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 105px; }
+.product-summary h3 { margin: 0; }
+.product-summary > span { flex: 0 0 auto; color: var(--green); font-weight: 800; white-space: nowrap; }
 .product-info > p { color: var(--orange); font-size: 11px; font-weight: 800; letter-spacing: .16em; margin-bottom: 10px; }
 .product-info h3 { font: 700 24px Georgia, "Noto Serif TC", serif; margin-bottom: 10px; }
 .product-info > span { display: block; color: #707a74; font-size: 13px; line-height: 1.75; white-space: pre-line; }
@@ -87,6 +91,21 @@ h1 em { color: var(--orange); font-style: normal; }
 .price-row button { border: 0; background: none; cursor: pointer; font-size: 12px; font-weight: 800; color: var(--green); }
 .price-row button:hover { color: var(--orange); }
 .price-row button b { display: inline-grid; place-items: center; margin-left: 8px; width: 26px; height: 26px; border-radius: 50%; background: var(--green); color: white; }
+.product-modal { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; }
+.product-modal-backdrop { position: absolute; inset: 0; width: 100%; border: 0; background: rgba(8,25,17,.68); cursor: pointer; }
+.product-dialog { position: relative; width: min(900px, 100%); max-height: min(760px, 92vh); overflow: auto; display: grid; grid-template-columns: minmax(300px, .9fr) minmax(340px, 1.1fr); background: var(--paper); box-shadow: 0 28px 80px rgba(0,0,0,.32); }
+.product-modal-close { position: absolute; z-index: 2; right: 16px; top: 14px; width: 42px; height: 42px; border: 0; border-radius: 50%; background: rgba(255,255,255,.92); font-size: 28px; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+.product-modal-photo { position: relative; min-height: 520px; background: url("/kuanslab/beef-noodle-hero.png") 67% 50%/cover no-repeat; overflow: hidden; }
+.noodle-modal-photo { background: radial-gradient(circle at 50% 50%, #c49b64 0 42%, #a8733c 43% 45%, #e3caa1 46% 70%, #cfad7b 71% 100%); }
+.product-modal-photo .noodle-art { inset: 24% 15%; }
+.product-modal-info { padding: clamp(35px, 5vw, 70px); display: flex; flex-direction: column; }
+.product-modal-info > p { margin-bottom: 12px; color: var(--orange); font-size: 12px; font-weight: 800; letter-spacing: .16em; }
+.product-modal-info h2 { margin: 0 0 25px; font: 700 clamp(30px, 4vw, 48px)/1.25 Georgia, "Noto Serif TC", serif; }
+.product-description { color: #5f6d65; line-height: 1.9; white-space: pre-line; }
+.product-modal-buy { margin-top: auto; padding-top: 32px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.product-modal-buy strong { font: 700 27px Georgia, serif; }
+.product-modal-buy button { border: 0; padding: 14px 18px; background: var(--green); color: white; font-weight: 800; cursor: pointer; }
+.product-modal-buy button b { margin-left: 8px; color: #fff; }
 
 .story-section { display: grid; grid-template-columns: 1fr 1fr; min-height: 520px; background: var(--orange); color: white; }
 .story-quote { padding: 90px 8vw; }
@@ -199,6 +218,8 @@ footer small { display: block; padding-top: 24px; border-top: 1px solid rgba(255
   .section-heading { align-items: start; flex-direction: column; }
   .product-grid { grid-template-columns: 1fr; }
   .product-photo { height: 360px; }
+  .product-dialog { grid-template-columns: 1fr; }
+  .product-modal-photo { min-height: 300px; }
   .story-section { grid-template-columns: 1fr; }
   .services-section { grid-template-columns: 1fr; }
 }
@@ -213,6 +234,12 @@ footer small { display: block; padding-top: 24px; border-top: 1px solid rgba(255
   .trust-strip div { flex-direction: column; align-items: center; gap: 4px; }
   .menu-section { padding: 80px 20px; }
   .product-photo { height: 250px; }
+  .product-modal { padding: 12px; }
+  .product-dialog { max-height: 94vh; }
+  .product-modal-photo { min-height: 235px; }
+  .product-modal-info { padding: 28px 22px; }
+  .product-modal-buy { align-items: stretch; flex-direction: column; }
+  .product-modal-buy button { width: 100%; }
   .story-quote, .story-detail > div { padding: 65px 26px; }
   .steps { flex-direction: column; gap: 26px; }
   .steps i { transform: rotate(90deg); }

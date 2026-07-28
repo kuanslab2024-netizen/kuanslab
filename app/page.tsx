@@ -111,6 +111,7 @@ const defaultSettings: SiteSettings = {
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [catalogLoaded, setCatalogLoaded] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSettings);
   const [counts, setCounts] = useState<Record<string, number>>({ classic: 0, double: 0, family: 0, noodles: 0 });
   const [cartOpen, setCartOpen] = useState(false);
@@ -182,6 +183,20 @@ export default function Home() {
 
     return cleanup;
   }, []);
+
+  useEffect(() => {
+    if (!selectedProduct) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedProduct(null);
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [selectedProduct]);
 
   const add = (id: string) => {
     setCounts((prev) => ({ ...prev, [id]: (prev[id] ?? 0) + 1 }));
@@ -338,31 +353,53 @@ export default function Home() {
             <p className="catalog-message">商品載入中…</p>
           ) : products.length ? products.map((product, index) => (
             <article className={`product-card card-${index + 1} ${product.id === "noodles" ? "noodle-card" : ""}`} key={product.id}>
-              <div
-                className="product-photo"
-                style={product.imageUrl ? { backgroundImage: `url("${product.imageUrl}")` } : undefined}
-              >
-                <span className="tag">{product.tag}</span>
-                <span className="photo-index">0{index + 1}</span>
-                {product.id === "noodles" && <span className="noodle-art" aria-hidden="true"><i /><i /><i /><i /><i /></span>}
-              </div>
-              <div className="product-info">
-                <p>{product.eyebrow}</p>
-                <h3>{product.name}</h3>
-                <span>{product.desc}</span>
-                <div className="price-row">
-                  <strong>NT$ {product.price.toLocaleString("zh-TW")}</strong>
-                  <button onClick={() => add(product.id)} aria-label={`加入 ${product.name}`}>
-                    加入購物袋 <b>＋</b>
-                  </button>
+              <button className="product-preview" type="button" onClick={() => setSelectedProduct(product)} aria-label={`查看 ${product.name} 詳情`}>
+                <div
+                  className="product-photo"
+                  style={product.imageUrl ? { backgroundImage: `url("${product.imageUrl}")` } : undefined}
+                >
+                  <span className="tag">{product.tag}</span>
+                  <span className="photo-index">0{index + 1}</span>
+                  {product.id === "noodles" && <span className="noodle-art" aria-hidden="true"><i /><i /><i /><i /><i /></span>}
                 </div>
-              </div>
+                <div className="product-info product-summary">
+                  <h3>{product.name}</h3>
+                  <span>查看商品詳情 →</span>
+                </div>
+              </button>
             </article>
           )) : (
             <p className="catalog-message">目前商品準備中，歡迎稍後再來看看。</p>
           )}
         </div>
       </section>
+
+      {selectedProduct && (
+        <div className="product-modal" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
+          <button className="product-modal-backdrop" type="button" onClick={() => setSelectedProduct(null)} aria-label="關閉商品詳情" />
+          <div className="product-dialog">
+            <button className="product-modal-close" type="button" onClick={() => setSelectedProduct(null)} aria-label="關閉">×</button>
+            <div
+              className={`product-modal-photo ${selectedProduct.id === "noodles" ? "noodle-modal-photo" : ""}`}
+              style={selectedProduct.imageUrl ? { backgroundImage: `url("${selectedProduct.imageUrl}")` } : undefined}
+            >
+              <span className="tag">{selectedProduct.tag}</span>
+              {selectedProduct.id === "noodles" && <span className="noodle-art" aria-hidden="true"><i /><i /><i /><i /><i /></span>}
+            </div>
+            <div className="product-modal-info">
+              <p>{selectedProduct.eyebrow}</p>
+              <h2 id="product-modal-title">{selectedProduct.name}</h2>
+              <div className="product-description">{selectedProduct.desc}</div>
+              <div className="product-modal-buy">
+                <strong>NT$ {selectedProduct.price.toLocaleString("zh-TW")}</strong>
+                <button type="button" onClick={() => { add(selectedProduct.id); setSelectedProduct(null); }}>
+                  加入購物袋 <b>＋</b>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <section id="services" className="services-section">
         <div className="services-intro">
