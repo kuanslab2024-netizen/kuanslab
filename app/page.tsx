@@ -52,6 +52,10 @@ export default function Home() {
     email: "",
     postalCode: "",
     address: "",
+    transferLastFive: "",
+    invoiceType: "二聯式發票",
+    companyName: "",
+    taxId: "",
     note: "",
     website: "",
   });
@@ -117,6 +121,10 @@ export default function Home() {
       note: customer.note.trim(),
       paymentStatus: "待確認",
       orderStatus: "待 LINE 確認",
+      transferLastFive: customer.transferLastFive.trim(),
+      invoiceType: customer.invoiceType,
+      companyName: customer.invoiceType === "三聯式發票" ? customer.companyName.trim() : "",
+      taxId: customer.invoiceType === "三聯式發票" ? customer.taxId.trim() : "",
     };
 
     try {
@@ -134,6 +142,8 @@ export default function Home() {
         `商品：${details}`,
         `合計：NT$ ${payload.total}`,
         "付款：台新銀行轉帳（銀行代碼 812）",
+        `轉帳後五碼：${payload.transferLastFive}`,
+        `發票：${payload.invoiceType}${payload.companyName ? `／${payload.companyName}／統編 ${payload.taxId}` : ""}`,
         customer.note.trim() ? `備註：${customer.note.trim()}` : "",
         "訂單已送出至系統，如已匯款請提供帳號後五碼。",
       ].filter(Boolean).join("\n");
@@ -305,6 +315,17 @@ export default function Home() {
                 {delivery === "宅配" && <>
                   <label>郵遞區號<input required inputMode="numeric" autoComplete="postal-code" value={customer.postalCode} onChange={(e) => setCustomer({ ...customer, postalCode: e.target.value })} /></label>
                   <label>收件地址<textarea required autoComplete="street-address" value={customer.address} onChange={(e) => setCustomer({ ...customer, address: e.target.value })} /></label>
+                </>}
+                <label>轉帳後五碼<input required inputMode="numeric" pattern="[0-9]{5}" maxLength={5} placeholder="請輸入匯款帳號後五碼" value={customer.transferLastFive} onChange={(e) => setCustomer({ ...customer, transferLastFive: e.target.value.replace(/\D/g, "").slice(0, 5) })} /></label>
+                <label>發票資訊
+                  <select value={customer.invoiceType} onChange={(e) => setCustomer({ ...customer, invoiceType: e.target.value })}>
+                    <option value="二聯式發票">二聯式發票</option>
+                    <option value="三聯式發票">三聯式發票（公司行號＋統一編號）</option>
+                  </select>
+                </label>
+                {customer.invoiceType === "三聯式發票" && <>
+                  <label>公司行號<input required value={customer.companyName} onChange={(e) => setCustomer({ ...customer, companyName: e.target.value })} /></label>
+                  <label>統一編號<input required inputMode="numeric" pattern="[0-9]{8}" maxLength={8} placeholder="請輸入 8 位統一編號" value={customer.taxId} onChange={(e) => setCustomer({ ...customer, taxId: e.target.value.replace(/\D/g, "").slice(0, 8) })} /></label>
                 </>}
                 <label>訂單備註（選填）<textarea value={customer.note} onChange={(e) => setCustomer({ ...customer, note: e.target.value })} /></label>
                 <label className="order-honeypot" aria-hidden="true">網站<input tabIndex={-1} autoComplete="off" value={customer.website} onChange={(e) => setCustomer({ ...customer, website: e.target.value })} /></label>
