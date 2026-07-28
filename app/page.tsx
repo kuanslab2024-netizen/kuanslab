@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { GOOGLE_SHEETS_ENDPOINT, OFFICIAL_LINE_URL } from "./order-config";
 
 type Product = {
@@ -155,7 +155,7 @@ export default function Home() {
   const items = products.filter((item) => counts[item.id] > 0);
   const quantity = Object.values(counts).reduce((sum, count) => sum + count, 0);
   const subtotal = items.reduce((sum, item) => sum + item.price * counts[item.id], 0);
-  const shipping = delivery === "宅配" && subtotal > 0 && subtotal < siteSettings.freeShippingThreshold
+  const shipping = delivery === "宅配" && subtotal > 0
     ? calculateBoxShipping(quantity, siteSettings)
     : 0;
 
@@ -225,11 +225,6 @@ export default function Home() {
   const update = (id: string, delta: number) =>
     setCounts((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] ?? 0) + delta) }));
 
-  const orderSummary = useMemo(() => {
-    if (!quantity) return "挑一碗今晚想吃的牛肉麵吧";
-    return `${quantity} 件商品 · NT$ ${(subtotal + shipping).toLocaleString("zh-TW")}`;
-  }, [quantity, subtotal, shipping]);
-
   const copyBankValue = async (label: string, value: string) => {
     try {
       await navigator.clipboard.writeText(value);
@@ -247,8 +242,7 @@ export default function Home() {
       return;
     }
     if (!GOOGLE_SHEETS_ENDPOINT) {
-      setNotice("訂單表尚未完成連接，請先透過 LINE 聯絡我們");
-      window.open(siteSettings.lineUrl || OFFICIAL_LINE_URL, "_blank", "noopener,noreferrer");
+      setNotice("訂單系統尚未完成連接，請稍後再試");
       return;
     }
 
@@ -271,7 +265,7 @@ export default function Home() {
       paymentMethod: "銀行轉帳（台新銀行）",
       note: customer.note.trim(),
       paymentStatus: "待確認",
-      orderStatus: "待 LINE 確認",
+      orderStatus: "新訂單",
       transferLastFive: customer.transferLastFive.trim(),
       invoiceType: customer.invoiceType,
       companyName: customer.invoiceType === "三聯式發票" ? customer.companyName.trim() : "",
@@ -285,25 +279,12 @@ export default function Home() {
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(payload),
       });
-      const lineMessage = [
-        `KUANS LAB 訂單 ${orderId}`,
-        `姓名：${payload.customerName}`,
-        `電話：${payload.phone}`,
-        `取貨：${delivery}`,
-        `商品：${details}`,
-        `合計：NT$ ${payload.total}`,
-        "付款：台新銀行轉帳（銀行代碼 812）",
-        `轉帳後五碼：${payload.transferLastFive}`,
-        `發票：${payload.invoiceType}${payload.companyName ? `／${payload.companyName}／統編 ${payload.taxId}` : ""}`,
-        customer.note.trim() ? `備註：${customer.note.trim()}` : "",
-        "訂單已送出至系統，如已匯款請提供帳號後五碼。",
-      ].filter(Boolean).join("\n");
-      await navigator.clipboard?.writeText(lineMessage).catch(() => undefined);
-      setNotice(`訂單 ${orderId} 已建立，請到 LINE 貼上並送出確認`);
+      setNotice(`訂單 ${orderId} 已完成，我們會儘快為您確認`);
       setCheckoutOpen(false);
-      window.open(siteSettings.lineUrl || OFFICIAL_LINE_URL, "_blank", "noopener,noreferrer");
+      setPaymentOpen(true);
+      setCounts({});
     } catch {
-      setNotice("訂單暫時無法送出，請改用 LINE 聯絡我們");
+      setNotice("訂單暫時無法送出，請稍後再試");
     } finally {
       setSubmitting(false);
     }
@@ -336,7 +317,7 @@ export default function Home() {
           <div className="hero-actions">
             <a className="primary-cta" href="#menu">立即選購 <span>→</span></a>
             <span className="shipping-note">
-              冷凍宅配全台｜滿 NT${siteSettings.freeShippingThreshold.toLocaleString("zh-TW")} 免運
+              冷凍宅配全台｜依件數分箱計費・含包材費
             </span>
           </div>
         </div>
@@ -453,7 +434,12 @@ export default function Home() {
               <div className="empty-cart"><span>碗</span><h3>購物袋還是空的</h3><p>今晚，來一碗椒香紅燒牛肉麵吧。</p><button onClick={() => setCartOpen(false)}>去選購</button></div>
             ) : !checkoutOpen ? items.map((item) => (
               <div className="cart-item" key={item.id}>
-                <div className={`cart-thumb ${item.id === "noodles" ? "noodle-thumb" : ""}`}>{item.id === "noodles" && <span>麵</span>}</div>
+                <div
+                  className={`cart-thumb ${item.id === "noodles" && !item.imageUrl ? "noodle-thumb" : ""} ${item.imageUrl ? "custom-cart-image" : ""}`}
+                  style={item.imageUrl ? { backgroundImage: `url("${item.imageUrl}")` } : undefined}
+                >
+                  {item.id === "noodles" && !item.imageUrl && <span>麵</span>}
+                </div>
                 <div><h3>{item.name}</h3><p>NT$ {item.price}</p>
                   <div className="quantity"><button onClick={() => update(item.id, -1)}>−</button><span>{counts[item.id]}</span><button onClick={() => update(item.id, 1)}>＋</button></div>
                 </div>
@@ -496,8 +482,8 @@ export default function Home() {
                     <div><dt>匯款金額</dt><dd className="copy-value transfer-amount"><span>NT$ {(subtotal + shipping).toLocaleString("zh-TW")}</span><button type="button" aria-label="複製匯款金額" onClick={() => copyBankValue("匯款金額", String(subtotal + shipping))}>複製</button></dd></div>
                   </dl>
                 </div>
-                <p className="payment-alert">‼️ 如已匯款，請至 LINE 訊息告知帳號後五碼 ‼️</p>
-                <p className="privacy-note">確認後，訂單會寫入 KUANS LAB 訂單系統並開啟官方 LINE。</p>
+                <p className="payment-alert">‼️ 匯款完成後，請於下一步填寫帳號後五碼 ‼️</p>
+                <p className="privacy-note">確認後，訂單會直接寫入 KUANS LAB 訂單系統。</p>
                 <div className="checkout-box-guide" aria-label="黑貓宅急便分箱運費">
                   <div className="checkout-box-guide-head">
                     <b>黑貓宅急便・分箱運費</b>
@@ -527,16 +513,17 @@ export default function Home() {
             <button className={delivery === "自取" ? "active" : ""} onClick={() => setDelivery("自取")}>{siteSettings.pickupLabel}</button>
           </div>
           <div className="totals">
-            <span>{orderSummary}</span>
-            {quantity > 0 && shipping > 0 && (
-              <small>再買 NT$ {siteSettings.freeShippingThreshold - subtotal} 即享免運</small>
-            )}
+            <div className="checkout-breakdown">
+              <div><span>商品總額</span><b>NT$ {subtotal.toLocaleString("zh-TW")}</b></div>
+              <div><span>運費</span><b>{delivery === "自取" ? "NT$ 0" : `NT$ ${shipping.toLocaleString("zh-TW")}`}</b></div>
+              <div className="grand-total"><span>應付總額</span><b>NT$ {(subtotal + shipping).toLocaleString("zh-TW")}</b></div>
+            </div>
             {!checkoutOpen ? (
-              <button className="checkout" disabled={!quantity} onClick={() => { setCheckoutOpen(true); setPaymentOpen(true); }}>查看匯款資料 <b>→</b></button>
+              <button className="checkout" disabled={!quantity} onClick={() => { setCheckoutOpen(true); setPaymentOpen(true); }}>查看匯款資料及結帳 <b>→</b></button>
             ) : paymentOpen ? (
-              <button className="checkout" type="button" disabled={!quantity} onClick={() => setPaymentOpen(false)}>我已了解，填寫訂購資料 <b>→</b></button>
+              <button className="checkout" type="button" disabled={!quantity} onClick={() => setPaymentOpen(false)}>我已匯款完成，填寫訂購資料 <b>→</b></button>
             ) : (
-              <button className="checkout" type="submit" form="order-form" disabled={!quantity || submitting}>{submitting ? "正在建立訂單…" : "完成訂單並前往 LINE"} <b>→</b></button>
+              <button className="checkout" type="submit" form="order-form" disabled={!quantity || submitting}>{submitting ? "正在建立訂單…" : "完成訂單"} <b>→</b></button>
             )}
           </div>
         </aside>

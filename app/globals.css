@@ -198,6 +198,7 @@ footer small { display: block; padding-top: 24px; border-top: 1px solid rgba(255
 .empty-cart button { margin-top: 15px; padding: 12px 28px; border: 0; background: var(--green); color: white; cursor: pointer; }
 .cart-item { display: grid; grid-template-columns: 95px 1fr; gap: 18px; padding: 18px 0; border-bottom: 1px solid var(--line); }
 .cart-thumb { background: url("/kuanslab/beef-noodle-hero.png") 70%/cover; }
+.cart-thumb.custom-cart-image { background-color: #eee8dd; background-position: center; background-size: contain; background-repeat: no-repeat; }
 .cart-thumb.noodle-thumb { display: grid; place-items: center; background: #dfc49c; color: #7b522c; font: 700 25px Georgia, serif; border-radius: 50%; margin: 7px; }
 .cart-item h3 { margin: 4px 0 8px; font-size: 16px; }
 .cart-item p { color: var(--orange); font-weight: 700; font-size: 13px; }
@@ -210,6 +211,11 @@ footer small { display: block; padding-top: 24px; border-top: 1px solid rgba(255
 .totals { padding: 22px 30px 30px; }
 .totals > span { display: block; font-weight: 800; margin-bottom: 8px; }
 .totals small { color: var(--orange); }
+.checkout-breakdown { display: grid; gap: 9px; }
+.checkout-breakdown > div { display: flex; align-items: center; justify-content: space-between; gap: 20px; color: #68736d; font-size: 12px; }
+.checkout-breakdown b { color: var(--ink); font-size: 13px; }
+.checkout-breakdown .grand-total { margin-top: 5px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--ink); font-weight: 800; }
+.checkout-breakdown .grand-total b { color: var(--orange); font: 700 20px Georgia, serif; }
 .checkout { width: 100%; margin-top: 20px; border: 0; padding: 17px 20px; background: var(--orange); color: white; display: flex; justify-content: space-between; cursor: pointer; font-weight: 800; }
 .checkout:disabled { opacity: .35; cursor: not-allowed; }
 .delivery-toggle.locked { opacity: .65; pointer-events: none; }
