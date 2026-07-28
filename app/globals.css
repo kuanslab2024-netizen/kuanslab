@@ -31,6 +31,7 @@ nav { display: flex; align-items: center; gap: clamp(18px, 3vw, 46px); font-size
 nav a:hover { color: var(--orange); }
 .cart-button { border: 0; background: var(--green); color: white; border-radius: 99px; padding: 12px 17px; cursor: pointer; }
 .cart-button span { display: inline-grid; place-items: center; width: 21px; height: 21px; margin-left: 8px; border-radius: 50%; background: var(--orange); font-size: 11px; }
+.site-announcement { padding: 10px 20px; background: var(--orange); color: white; text-align: center; font-size: 13px; font-weight: 800; letter-spacing: .06em; }
 
 .hero { min-height: 630px; display: grid; grid-template-columns: 47% 53%; overflow: hidden; background: var(--paper); }
 .hero-copy { padding: clamp(70px, 8vw, 120px) 6vw; display: flex; flex-direction: column; justify-content: center; }

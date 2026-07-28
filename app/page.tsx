@@ -1,9 +1,25 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { GOOGLE_SHEETS_ENDPOINT, OFFICIAL_LINE_URL } from "./order-config";
 
-const products = [
+type Product = {
+  id: string;
+  name: string;
+  eyebrow: string;
+  desc: string;
+  price: number;
+  tag: string;
+  imageUrl: string;
+};
+
+type SiteSettings = {
+  announcement: string;
+  shippingFee: number;
+  freeShippingThreshold: number;
+};
+
+const defaultProducts: Product[] = [
   {
     id: "classic",
     name: "椒香紅燒牛肉麵",
@@ -11,6 +27,7 @@ const products = [
     desc: "厚切牛腱 · 秘製椒香 · 手工湯底",
     price: 260,
     tag: "招牌",
+    imageUrl: "",
   },
   {
     id: "double",
@@ -19,6 +36,7 @@ const products = [
     desc: "雙倍厚切牛腱，今天就吃得過癮",
     price: 360,
     tag: "澎湃",
+    imageUrl: "",
   },
   {
     id: "family",
@@ -27,6 +45,7 @@ const products = [
     desc: "四份湯肉包＋四份冷凍生拉麵",
     price: 980,
     tag: "免運",
+    imageUrl: "",
   },
   {
     id: "noodles",
@@ -35,10 +54,19 @@ const products = [
     desc: "久煮不爛、滑順帶勁，湯麵拌麵都合適",
     price: 120,
     tag: "加購",
+    imageUrl: "",
   },
 ];
 
+const defaultSettings: SiteSettings = {
+  announcement: "",
+  shippingFee: 120,
+  freeShippingThreshold: 999,
+};
+
 export default function Home() {
+  const [products, setProducts] = useState<Product[]>(defaultProducts);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSettings);
   const [counts, setCounts] = useState<Record<string, number>>({ classic: 0, double: 0, family: 0, noodles: 0 });
   const [cartOpen, setCartOpen] = useState(false);
   const [delivery, setDelivery] = useState<"宅配" | "自取">("宅配");
@@ -63,16 +91,54 @@ export default function Home() {
   const items = products.filter((item) => counts[item.id] > 0);
   const quantity = Object.values(counts).reduce((sum, count) => sum + count, 0);
   const subtotal = items.reduce((sum, item) => sum + item.price * counts[item.id], 0);
-  const shipping = delivery === "宅配" && subtotal > 0 && subtotal < 999 ? 120 : 0;
+  const shipping = delivery === "宅配" && subtotal > 0 && subtotal < siteSettings.freeShippingThreshold
+    ? siteSettings.shippingFee
+    : 0;
+
+  useEffect(() => {
+    if (!GOOGLE_SHEETS_ENDPOINT) return;
+
+    const callbackName = `kuansCatalog_${Date.now()}`;
+    const script = document.createElement("script");
+    const timer = window.setTimeout(cleanup, 8000);
+    const callbackWindow = window as typeof window & Record<string, unknown>;
+
+    function cleanup() {
+      window.clearTimeout(timer);
+      script.remove();
+      delete callbackWindow[callbackName];
+    }
+
+    callbackWindow[callbackName] = (response: {
+      ok?: boolean;
+      products?: Product[];
+      settings?: Partial<SiteSettings>;
+    }) => {
+      if (response?.ok && Array.isArray(response.products) && response.products.length) {
+        setProducts(response.products);
+      }
+      if (response?.ok && response.settings) {
+        setSiteSettings((current) => ({ ...current, ...response.settings }));
+      }
+      cleanup();
+    };
+
+    script.src = `${GOOGLE_SHEETS_ENDPOINT}?action=catalog&callback=${encodeURIComponent(callbackName)}`;
+    script.async = true;
+    script.onerror = cleanup;
+    document.body.appendChild(script);
+
+    return cleanup;
+  }, []);
 
   const add = (id: string) => {
-    setCounts((prev) => ({ ...prev, [id]: prev[id] + 1 }));
+    setCounts((prev) => ({ ...prev, [id]: (prev[id] ?? 0) + 1 }));
     setNotice("已加入購物袋");
     window.setTimeout(() => setNotice(""), 1800);
   };
 
   const update = (id: string, delta: number) =>
-    setCounts((prev) => ({ ...prev, [id]: Math.max(0, prev[id] + delta) }));
+    setCounts((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] ?? 0) + delta) }));
 
   const orderSummary = useMemo(() => {
     if (!quantity) return "挑一碗今晚想吃的牛肉麵吧";
@@ -173,6 +239,9 @@ export default function Home() {
           </button>
         </nav>
       </header>
+      {siteSettings.announcement && (
+        <div className="site-announcement" role="status">{siteSettings.announcement}</div>
+      )}
 
       <section id="top" className="hero">
         <div className="hero-copy">
@@ -184,7 +253,9 @@ export default function Home() {
           </p>
           <div className="hero-actions">
             <a className="primary-cta" href="#menu">立即選購 <span>→</span></a>
-            <span className="shipping-note">冷凍宅配全台｜滿 NT$999 免運</span>
+            <span className="shipping-note">
+              冷凍宅配全台｜滿 NT${siteSettings.freeShippingThreshold.toLocaleString("zh-TW")} 免運
+            </span>
           </div>
         </div>
         <div className="hero-image" role="img" aria-label="椒香紅燒牛肉麵">
@@ -211,7 +282,10 @@ export default function Home() {
         <div className="product-grid">
           {products.map((product, index) => (
             <article className={`product-card card-${index + 1} ${product.id === "noodles" ? "noodle-card" : ""}`} key={product.id}>
-              <div className="product-photo">
+              <div
+                className="product-photo"
+                style={product.imageUrl ? { backgroundImage: `url("${product.imageUrl}")` } : undefined}
+              >
                 <span className="tag">{product.tag}</span>
                 <span className="photo-index">0{index + 1}</span>
                 {product.id === "noodles" && <span className="noodle-art" aria-hidden="true"><i /><i /><i /><i /><i /></span>}
@@ -355,7 +429,9 @@ export default function Home() {
           </div>
           <div className="totals">
             <span>{orderSummary}</span>
-            {quantity > 0 && shipping > 0 && <small>再買 NT$ {999 - subtotal} 即享免運</small>}
+            {quantity > 0 && shipping > 0 && (
+              <small>再買 NT$ {siteSettings.freeShippingThreshold - subtotal} 即享免運</small>
+            )}
             {!checkoutOpen ? (
               <button className="checkout" disabled={!quantity} onClick={() => { setCheckoutOpen(true); setPaymentOpen(true); }}>查看匯款資料 <b>→</b></button>
             ) : paymentOpen ? (
