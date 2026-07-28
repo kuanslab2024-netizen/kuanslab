@@ -64,6 +64,7 @@ h1 em { color: var(--orange); font-style: normal; }
 .product-card:hover { transform: translateY(-6px); box-shadow: 0 20px 50px rgba(28, 50, 40, .12); }
 .product-preview { display: block; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
 .product-photo { height: 295px; position: relative; background: url("/kuanslab/beef-noodle-hero.png") 67% 50%/cover; overflow: hidden; }
+.custom-product-image { background-color: #eee8dd; background-position: center; background-size: contain; background-repeat: no-repeat; }
 .card-2 .product-photo { background-position: 76% 48%; filter: saturate(.9) brightness(.93); }
 .card-3 .product-photo { background-position: 57% 70%; filter: sepia(.08); }
 .noodle-card .product-photo {

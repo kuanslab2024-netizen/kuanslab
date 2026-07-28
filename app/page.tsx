@@ -352,15 +352,15 @@ export default function Home() {
           {!catalogLoaded ? (
             <p className="catalog-message">商品載入中…</p>
           ) : products.length ? products.map((product, index) => (
-            <article className={`product-card card-${index + 1} ${product.id === "noodles" ? "noodle-card" : ""}`} key={product.id}>
+            <article className={`product-card card-${index + 1} ${product.id === "noodles" && !product.imageUrl ? "noodle-card" : ""}`} key={product.id}>
               <button className="product-preview" type="button" onClick={() => setSelectedProduct(product)} aria-label={`查看 ${product.name} 詳情`}>
                 <div
-                  className="product-photo"
+                  className={`product-photo ${product.imageUrl ? "custom-product-image" : ""}`}
                   style={product.imageUrl ? { backgroundImage: `url("${product.imageUrl}")` } : undefined}
                 >
                   <span className="tag">{product.tag}</span>
                   <span className="photo-index">0{index + 1}</span>
-                  {product.id === "noodles" && <span className="noodle-art" aria-hidden="true"><i /><i /><i /><i /><i /></span>}
+                  {product.id === "noodles" && !product.imageUrl && <span className="noodle-art" aria-hidden="true"><i /><i /><i /><i /><i /></span>}
                 </div>
                 <div className="product-info product-summary">
                   <h3>{product.name}</h3>
@@ -380,11 +380,11 @@ export default function Home() {
           <div className="product-dialog">
             <button className="product-modal-close" type="button" onClick={() => setSelectedProduct(null)} aria-label="關閉">×</button>
             <div
-              className={`product-modal-photo ${selectedProduct.id === "noodles" ? "noodle-modal-photo" : ""}`}
+              className={`product-modal-photo ${selectedProduct.id === "noodles" && !selectedProduct.imageUrl ? "noodle-modal-photo" : ""} ${selectedProduct.imageUrl ? "custom-product-image" : ""}`}
               style={selectedProduct.imageUrl ? { backgroundImage: `url("${selectedProduct.imageUrl}")` } : undefined}
             >
               <span className="tag">{selectedProduct.tag}</span>
-              {selectedProduct.id === "noodles" && <span className="noodle-art" aria-hidden="true"><i /><i /><i /><i /><i /></span>}
+              {selectedProduct.id === "noodles" && !selectedProduct.imageUrl && <span className="noodle-art" aria-hidden="true"><i /><i /><i /><i /><i /></span>}
             </div>
             <div className="product-modal-info">
               <p>{selectedProduct.eyebrow}</p>
