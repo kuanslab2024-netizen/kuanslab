@@ -160,7 +160,10 @@ export default function Home() {
     : 0;
 
   useEffect(() => {
-    if (!GOOGLE_SHEETS_ENDPOINT) return;
+    if (!GOOGLE_SHEETS_ENDPOINT) {
+      setCatalogLoaded(true);
+      return;
+    }
 
     const callbackName = `kuansCatalog_${Date.now()}`;
     const script = document.createElement("script");
@@ -289,6 +292,19 @@ export default function Home() {
       setSubmitting(false);
     }
   };
+
+  if (!catalogLoaded) {
+    return (
+      <main className="site-loading" aria-live="polite" aria-label="網站資料載入中">
+        <div className="site-loading-brand">
+          <img src="./kuans-lab-logo.png" alt="" />
+          <div><b>KUANS LAB</b><span>寬 私 廚</span></div>
+        </div>
+        <div className="site-loading-line"><i /></div>
+        <p>正在準備最新菜單…</p>
+      </main>
+    );
+  }
 
   return (
     <main>
