@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
+import { GOOGLE_SHEETS_ENDPOINT, OFFICIAL_LINE_URL } from "./order-config";
 
 const products = [
   {
@@ -42,6 +43,17 @@ export default function Home() {
   const [cartOpen, setCartOpen] = useState(false);
   const [delivery, setDelivery] = useState<"宅配" | "自取">("宅配");
   const [notice, setNotice] = useState("");
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [customer, setCustomer] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    postalCode: "",
+    address: "",
+    note: "",
+    website: "",
+  });
 
   const items = products.filter((item) => counts[item.id] > 0);
   const quantity = Object.values(counts).reduce((sum, count) => sum + count, 0);
@@ -61,6 +73,69 @@ export default function Home() {
     if (!quantity) return "挑一碗今晚想吃的牛肉麵吧";
     return `${quantity} 件商品 · NT$ ${(subtotal + shipping).toLocaleString("zh-TW")}`;
   }, [quantity, subtotal, shipping]);
+
+  const submitOrder = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!quantity || submitting || customer.website) return;
+    if (delivery === "宅配" && (!customer.postalCode.trim() || !customer.address.trim())) {
+      setNotice("請填寫郵遞區號與收件地址");
+      return;
+    }
+    if (!GOOGLE_SHEETS_ENDPOINT) {
+      setNotice("訂單表尚未完成連接，請先透過 LINE 聯絡我們");
+      window.open(OFFICIAL_LINE_URL, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    setSubmitting(true);
+    const orderId = `KL${new Date().toISOString().replace(/\D/g, "").slice(2, 14)}`;
+    const details = items.map((item) => `${item.name} × ${counts[item.id]}（NT$ ${item.price * counts[item.id]}）`).join("、");
+    const payload = {
+      orderId,
+      orderedAt: new Date().toISOString(),
+      customerName: customer.name.trim(),
+      phone: customer.phone.trim(),
+      email: customer.email.trim(),
+      delivery,
+      postalCode: delivery === "宅配" ? customer.postalCode.trim() : "",
+      address: delivery === "宅配" ? customer.address.trim() : "工作室自取",
+      items: details,
+      subtotal,
+      shipping,
+      total: subtotal + shipping,
+      paymentMethod: "LINE 確認",
+      note: customer.note.trim(),
+      paymentStatus: "待確認",
+      orderStatus: "待 LINE 確認",
+    };
+
+    try {
+      await fetch(GOOGLE_SHEETS_ENDPOINT, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload),
+      });
+      const lineMessage = [
+        `KUANS LAB 訂單 ${orderId}`,
+        `姓名：${payload.customerName}`,
+        `電話：${payload.phone}`,
+        `取貨：${delivery}`,
+        `商品：${details}`,
+        `合計：NT$ ${payload.total}`,
+        customer.note.trim() ? `備註：${customer.note.trim()}` : "",
+        "訂單已送出至系統，請協助確認。",
+      ].filter(Boolean).join("\n");
+      await navigator.clipboard?.writeText(lineMessage).catch(() => undefined);
+      setNotice(`訂單 ${orderId} 已建立，請到 LINE 貼上並送出確認`);
+      setCheckoutOpen(false);
+      window.open(OFFICIAL_LINE_URL, "_blank", "noopener,noreferrer");
+    } catch {
+      setNotice("訂單暫時無法送出，請改用 LINE 聯絡我們");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <main>
@@ -203,23 +278,41 @@ export default function Home() {
           <div className="drawer-content">
             {!items.length ? (
               <div className="empty-cart"><span>碗</span><h3>購物袋還是空的</h3><p>今晚，來一碗椒香紅燒牛肉麵吧。</p><button onClick={() => setCartOpen(false)}>去選購</button></div>
-            ) : items.map((item) => (
+            ) : !checkoutOpen ? items.map((item) => (
               <div className="cart-item" key={item.id}>
                 <div className={`cart-thumb ${item.id === "noodles" ? "noodle-thumb" : ""}`}>{item.id === "noodles" && <span>麵</span>}</div>
                 <div><h3>{item.name}</h3><p>NT$ {item.price}</p>
                   <div className="quantity"><button onClick={() => update(item.id, -1)}>−</button><span>{counts[item.id]}</span><button onClick={() => update(item.id, 1)}>＋</button></div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <form id="order-form" className="order-form" onSubmit={submitOrder}>
+                <div className="form-heading"><b>填寫訂購資料</b><button type="button" onClick={() => setCheckoutOpen(false)}>返回購物袋</button></div>
+                <label>姓名<input required autoComplete="name" value={customer.name} onChange={(e) => setCustomer({ ...customer, name: e.target.value })} /></label>
+                <label>手機號碼<input required inputMode="tel" autoComplete="tel" value={customer.phone} onChange={(e) => setCustomer({ ...customer, phone: e.target.value })} /></label>
+                <label>Email（選填）<input type="email" autoComplete="email" value={customer.email} onChange={(e) => setCustomer({ ...customer, email: e.target.value })} /></label>
+                {delivery === "宅配" && <>
+                  <label>郵遞區號<input required inputMode="numeric" autoComplete="postal-code" value={customer.postalCode} onChange={(e) => setCustomer({ ...customer, postalCode: e.target.value })} /></label>
+                  <label>收件地址<textarea required autoComplete="street-address" value={customer.address} onChange={(e) => setCustomer({ ...customer, address: e.target.value })} /></label>
+                </>}
+                <label>訂單備註（選填）<textarea value={customer.note} onChange={(e) => setCustomer({ ...customer, note: e.target.value })} /></label>
+                <label className="order-honeypot" aria-hidden="true">網站<input tabIndex={-1} autoComplete="off" value={customer.website} onChange={(e) => setCustomer({ ...customer, website: e.target.value })} /></label>
+                <p className="privacy-note">送出即同意 KUANS LAB 僅將資料用於本次訂單、配送與聯絡。</p>
+              </form>
+            )}
           </div>
-          <div className="delivery-toggle">
+          <div className={`delivery-toggle ${checkoutOpen ? "locked" : ""}`}>
             <button className={delivery === "宅配" ? "active" : ""} onClick={() => setDelivery("宅配")}>冷凍宅配</button>
             <button className={delivery === "自取" ? "active" : ""} onClick={() => setDelivery("自取")}>工作室自取</button>
           </div>
           <div className="totals">
             <span>{orderSummary}</span>
             {quantity > 0 && shipping > 0 && <small>再買 NT$ {999 - subtotal} 即享免運</small>}
-            <button className="checkout" disabled={!quantity} onClick={() => setNotice("示範訂單已準備完成")}>前往結帳 <b>→</b></button>
+            {!checkoutOpen ? (
+              <button className="checkout" disabled={!quantity} onClick={() => setCheckoutOpen(true)}>填寫資料並送出訂單 <b>→</b></button>
+            ) : (
+              <button className="checkout" type="submit" form="order-form" disabled={!quantity || submitting}>{submitting ? "正在建立訂單…" : "送出訂單並前往 LINE"} <b>→</b></button>
+            )}
           </div>
         </aside>
       </div>
