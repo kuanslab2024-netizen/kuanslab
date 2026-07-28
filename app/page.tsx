@@ -44,6 +44,7 @@ export default function Home() {
   const [delivery, setDelivery] = useState<"宅配" | "自取">("宅配");
   const [notice, setNotice] = useState("");
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [customer, setCustomer] = useState({
     name: "",
@@ -74,8 +75,17 @@ export default function Home() {
     return `${quantity} 件商品 · NT$ ${(subtotal + shipping).toLocaleString("zh-TW")}`;
   }, [quantity, subtotal, shipping]);
 
-  const submitOrder = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const copyBankValue = async (label: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setNotice(`${label}已複製`);
+    } catch {
+      setNotice(`請長按選取${label}`);
+    }
+    window.setTimeout(() => setNotice(""), 1800);
+  };
+
+  const submitOrder = async () => {
     if (!quantity || submitting || customer.website) return;
     if (delivery === "宅配" && (!customer.postalCode.trim() || !customer.address.trim())) {
       setNotice("請填寫郵遞區號與收件地址");
@@ -103,7 +113,7 @@ export default function Home() {
       subtotal,
       shipping,
       total: subtotal + shipping,
-      paymentMethod: "LINE 確認",
+      paymentMethod: "銀行轉帳（台新銀行）",
       note: customer.note.trim(),
       paymentStatus: "待確認",
       orderStatus: "待 LINE 確認",
@@ -123,8 +133,9 @@ export default function Home() {
         `取貨：${delivery}`,
         `商品：${details}`,
         `合計：NT$ ${payload.total}`,
+        "付款：台新銀行轉帳（銀行代碼 812）",
         customer.note.trim() ? `備註：${customer.note.trim()}` : "",
-        "訂單已送出至系統，請協助確認。",
+        "訂單已送出至系統，如已匯款請提供帳號後五碼。",
       ].filter(Boolean).join("\n");
       await navigator.clipboard?.writeText(lineMessage).catch(() => undefined);
       setNotice(`訂單 ${orderId} 已建立，請到 LINE 貼上並送出確認`);
@@ -285,9 +296,9 @@ export default function Home() {
                   <div className="quantity"><button onClick={() => update(item.id, -1)}>−</button><span>{counts[item.id]}</span><button onClick={() => update(item.id, 1)}>＋</button></div>
                 </div>
               </div>
-            )) : (
-              <form id="order-form" className="order-form" onSubmit={submitOrder}>
-                <div className="form-heading"><b>填寫訂購資料</b><button type="button" onClick={() => setCheckoutOpen(false)}>返回購物袋</button></div>
+            )) : !paymentOpen ? (
+              <form id="order-form" className="order-form" onSubmit={(event: FormEvent<HTMLFormElement>) => { event.preventDefault(); submitOrder(); }}>
+                <div className="form-heading"><b>填寫訂購資料</b><button type="button" onClick={() => setPaymentOpen(true)}>返回匯款資料</button></div>
                 <label>姓名<input required autoComplete="name" value={customer.name} onChange={(e) => setCustomer({ ...customer, name: e.target.value })} /></label>
                 <label>手機號碼<input required inputMode="tel" autoComplete="tel" value={customer.phone} onChange={(e) => setCustomer({ ...customer, phone: e.target.value })} /></label>
                 <label>Email（選填）<input type="email" autoComplete="email" value={customer.email} onChange={(e) => setCustomer({ ...customer, email: e.target.value })} /></label>
@@ -299,6 +310,22 @@ export default function Home() {
                 <label className="order-honeypot" aria-hidden="true">網站<input tabIndex={-1} autoComplete="off" value={customer.website} onChange={(e) => setCustomer({ ...customer, website: e.target.value })} /></label>
                 <p className="privacy-note">送出即同意 KUANS LAB 僅將資料用於本次訂單、配送與聯絡。</p>
               </form>
+            ) : (
+              <section className="payment-panel" aria-labelledby="payment-title">
+                <div className="form-heading"><b id="payment-title">匯款資料</b><button type="button" onClick={() => setCheckoutOpen(false)}>返回購物袋</button></div>
+                <div className="bank-card">
+                  <span className="bank-icon" aria-hidden="true">🧾</span>
+                  <dl>
+                    <div><dt>銀行</dt><dd>台新銀行</dd></div>
+                    <div><dt>銀行代碼</dt><dd className="copy-value"><span>812</span><button type="button" aria-label="複製銀行代碼" onClick={() => copyBankValue("銀行代碼", "812")}>複製</button></dd></div>
+                    <div><dt>帳號</dt><dd className="copy-value account-number"><span>2076 01 0001111666</span><button type="button" aria-label="複製匯款帳號" onClick={() => copyBankValue("帳號", "2076010001111666")}>複製</button></dd></div>
+                    <div><dt>戶名</dt><dd>餐飲企業社</dd></div>
+                    <div><dt>匯款金額</dt><dd className="copy-value transfer-amount"><span>NT$ {(subtotal + shipping).toLocaleString("zh-TW")}</span><button type="button" aria-label="複製匯款金額" onClick={() => copyBankValue("匯款金額", String(subtotal + shipping))}>複製</button></dd></div>
+                  </dl>
+                </div>
+                <p className="payment-alert">‼️ 如已匯款，請至 LINE 訊息告知帳號後五碼 ‼️</p>
+                <p className="privacy-note">確認後，訂單會寫入 KUANS LAB 訂單系統並開啟官方 LINE。</p>
+              </section>
             )}
           </div>
           <div className={`delivery-toggle ${checkoutOpen ? "locked" : ""}`}>
@@ -309,9 +336,11 @@ export default function Home() {
             <span>{orderSummary}</span>
             {quantity > 0 && shipping > 0 && <small>再買 NT$ {999 - subtotal} 即享免運</small>}
             {!checkoutOpen ? (
-              <button className="checkout" disabled={!quantity} onClick={() => setCheckoutOpen(true)}>填寫資料並送出訂單 <b>→</b></button>
+              <button className="checkout" disabled={!quantity} onClick={() => { setCheckoutOpen(true); setPaymentOpen(true); }}>查看匯款資料 <b>→</b></button>
+            ) : paymentOpen ? (
+              <button className="checkout" type="button" disabled={!quantity} onClick={() => setPaymentOpen(false)}>我已了解，填寫訂購資料 <b>→</b></button>
             ) : (
-              <button className="checkout" type="submit" form="order-form" disabled={!quantity || submitting}>{submitting ? "正在建立訂單…" : "送出訂單並前往 LINE"} <b>→</b></button>
+              <button className="checkout" type="submit" form="order-form" disabled={!quantity || submitting}>{submitting ? "正在建立訂單…" : "完成訂單並前往 LINE"} <b>→</b></button>
             )}
           </div>
         </aside>
