@@ -59,6 +59,7 @@ h1 em { color: var(--orange); font-style: normal; }
 .section-heading h2, .how-section h2 { font: 700 clamp(34px, 4vw, 58px)/1.2 Georgia, "Noto Serif TC", serif; margin: 0; }
 .section-heading > p { color: #68736d; line-height: 1.8; }
 .product-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.catalog-message { grid-column: 1 / -1; margin: 0; padding: 65px 24px; border: 1px solid var(--line); background: var(--paper); color: #68736d; text-align: center; }
 .product-card { background: var(--paper); border: 1px solid var(--line); transition: transform .25s, box-shadow .25s; }
 .product-card:hover { transform: translateY(-6px); box-shadow: 0 20px 50px rgba(28, 50, 40, .12); }
 .product-photo { height: 295px; position: relative; background: url("/kuanslab/beef-noodle-hero.png") 67% 50%/cover; overflow: hidden; }

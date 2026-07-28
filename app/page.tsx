@@ -109,7 +109,8 @@ const defaultSettings: SiteSettings = {
 };
 
 export default function Home() {
-  const [products, setProducts] = useState<Product[]>(defaultProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSettings);
   const [counts, setCounts] = useState<Record<string, number>>({ classic: 0, double: 0, family: 0, noodles: 0 });
   const [cartOpen, setCartOpen] = useState(false);
@@ -144,7 +145,10 @@ export default function Home() {
 
     const callbackName = `kuansCatalog_${Date.now()}`;
     const script = document.createElement("script");
-    const timer = window.setTimeout(cleanup, 8000);
+    const timer = window.setTimeout(() => {
+      setCatalogLoaded(true);
+      cleanup();
+    }, 8000);
     const callbackWindow = window as typeof window & Record<string, unknown>;
 
     function cleanup() {
@@ -158,18 +162,22 @@ export default function Home() {
       products?: Product[];
       settings?: Partial<SiteSettings>;
     }) => {
-      if (response?.ok && Array.isArray(response.products) && response.products.length) {
-        setProducts(response.products);
+      if (response?.ok) {
+        setProducts(Array.isArray(response.products) ? response.products : []);
       }
       if (response?.ok && response.settings) {
         setSiteSettings((current) => ({ ...current, ...response.settings }));
       }
+      setCatalogLoaded(true);
       cleanup();
     };
 
     script.src = `${GOOGLE_SHEETS_ENDPOINT}?action=catalog&callback=${encodeURIComponent(callbackName)}`;
     script.async = true;
-    script.onerror = cleanup;
+    script.onerror = () => {
+      setCatalogLoaded(true);
+      cleanup();
+    };
     document.body.appendChild(script);
 
     return cleanup;
@@ -326,7 +334,9 @@ export default function Home() {
         </div>
 
         <div className="product-grid">
-          {products.map((product, index) => (
+          {!catalogLoaded ? (
+            <p className="catalog-message">商品載入中…</p>
+          ) : products.length ? products.map((product, index) => (
             <article className={`product-card card-${index + 1} ${product.id === "noodles" ? "noodle-card" : ""}`} key={product.id}>
               <div
                 className="product-photo"
@@ -348,24 +358,9 @@ export default function Home() {
                 </div>
               </div>
             </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="story" className="story-section">
-        <div className="story-quote">
-          <span>“</span>
-          <h2>{siteSettings.storyTitle}</h2>
-          <p>{siteSettings.storyText}</p>
-          <a href="#menu">認識這碗麵的誕生 →</a>
-        </div>
-        <div className="story-detail">
-          <p className="vertical-label">KUANS LAB · PRIVATE KITCHEN</p>
-          <div>
-            <span className="mini-mark">寬</span>
-            <h3>{siteSettings.brandPromise}</h3>
-            <p>{siteSettings.brandSubtitle}</p>
-          </div>
+          )) : (
+            <p className="catalog-message">目前商品準備中，歡迎稍後再來看看。</p>
+          )}
         </div>
       </section>
 
@@ -388,24 +383,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="how-section">
-        <p className="kicker">HOW TO SERVE</p>
-        <h2>三步驟，熱騰騰上桌</h2>
-        <div className="steps">
-          <div><b>01</b><span>湯包隔水加熱<br />約 10 分鐘</span></div>
-          <i>→</i>
-          <div><b>02</b><span>生麵滾水煮熟<br />約 2 分鐘</span></div>
-          <i>→</i>
-          <div><b>03</b><span>盛碗加上喜歡的<br />青菜與蔥花</span></div>
-        </div>
-      </section>
-
-      <footer>
-        <div className="brand footer-brand"><span className="brand-mark">KL</span><span>KUANS LAB <b>寬私廚</b></span></div>
-        <p>{siteSettings.footerText}</p>
-        <div className="footer-links"><a href="#menu">{siteSettings.deliveryLabel}</a><a href="#services">外燴服務</a><a href={siteSettings.lineUrl} target="_blank" rel="noreferrer">LINE 客服</a></div>
-        <small>© 2026 KUANS LAB. All rights reserved.</small>
-      </footer>
 
       {notice && <div className="toast" role="status">{notice} ✓</div>}
 
