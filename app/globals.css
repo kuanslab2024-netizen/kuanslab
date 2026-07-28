@@ -4,8 +4,8 @@
   --cream: #f5f0e7;
   --paper: #fffdf8;
   --ink: #172c22;
-  --green: #123c2c;
-  --orange: #e6572e;
+  --green: #4A922F;
+  --orange: #F46C47;
   --gold: #c89950;
   --line: rgba(23, 44, 34, .16);
 }
@@ -24,8 +24,9 @@ a { color: inherit; text-decoration: none; }
 .brand { display: flex; align-items: center; gap: 14px; font-size: 15px; letter-spacing: .14em; }
 .brand b { display: block; margin-top: 4px; font-size: 11px; letter-spacing: .32em; font-weight: 500; color: #6a756e; }
 .brand-mark {
-  display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: var(--green);
-  border: 3px solid var(--orange); color: white; font: 500 14px/1 Georgia, serif; letter-spacing: .08em;
+  display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%;
+  background: url("/kuanslab/kuans-lab-logo.png") center/cover no-repeat;
+  color: transparent; font-size: 0; overflow: hidden;
 }
 nav { display: flex; align-items: center; gap: clamp(18px, 3vw, 46px); font-size: 13px; font-weight: 700; }
 nav a:hover { color: var(--orange); }

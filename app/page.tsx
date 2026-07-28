@@ -246,7 +246,7 @@ export default function Home() {
       <section id="top" className="hero">
         <div className="hero-copy">
           <p className="kicker">餐廳級熟製 · 冷凍宅配</p>
-          <h1>一碗好麵，<br /><em>把私廚帶回家。</em></h1>
+          <h1>KUANS LAB 寬私廚<br /><em>餐廳等級料理，在家也能輕鬆享用</em></h1>
           <p className="hero-lead">
             72 小時慢熬牛骨湯，厚切牛腱與現磨椒香。只要 12 分鐘，
             讓忙碌的今晚也值得好好吃飯。
