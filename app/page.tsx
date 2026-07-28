@@ -17,6 +17,28 @@ type SiteSettings = {
   announcement: string;
   shippingFee: number;
   freeShippingThreshold: number;
+  heroKicker: string;
+  heroTitle1: string;
+  heroTitle2: string;
+  heroIntro: string;
+  heroImageUrl: string;
+  menuKicker: string;
+  menuTitle: string;
+  menuIntro: string;
+  storyTitle: string;
+  storyText: string;
+  brandPromise: string;
+  brandSubtitle: string;
+  serviceTitle: string;
+  serviceIntro: string;
+  lineUrl: string;
+  pickupLabel: string;
+  deliveryLabel: string;
+  bankName: string;
+  bankCode: string;
+  bankAccount: string;
+  bankAccountName: string;
+  footerText: string;
 };
 
 const defaultProducts: Product[] = [
@@ -62,6 +84,28 @@ const defaultSettings: SiteSettings = {
   announcement: "",
   shippingFee: 120,
   freeShippingThreshold: 999,
+  heroKicker: "餐廳級熟製 · 冷凍宅配",
+  heroTitle1: "KUANS LAB 寬私廚",
+  heroTitle2: "餐廳等級料理，在家也能輕鬆享用",
+  heroIntro: "72 小時慢熬牛骨湯，厚切牛腱與現磨椒香。只要 12 分鐘，讓忙碌的今晚也值得好好吃飯。",
+  heroImageUrl: "",
+  menuKicker: "THIS MONTH'S MENU",
+  menuTitle: "今晚，你想吃哪一碗？",
+  menuIntro: "湯肉包與生拉麵分裝，簡單覆熱，也能吃到剛起鍋的口感。",
+  storyTitle: "我們不賣匆忙的味道。",
+  storyText: "從炒糖色、煸香辛料到牛骨慢熬，每一鍋都按照餐廳的節奏來。你負責把水煮滾，剩下的交給寬私廚。",
+  brandPromise: "把餐廳等級的料理，帶進每一天的餐桌。",
+  brandSubtitle: "私廚｜冷凍料理｜外燴服務",
+  serviceTitle: "不只一碗麵，也為你的餐桌掌廚。",
+  serviceIntro: "想預約私廚、規劃外燴，或詢問冷凍宅配？透過官方 LINE 告訴我們日期、人數與需求，由專人為你安排。",
+  lineUrl: OFFICIAL_LINE_URL,
+  pickupLabel: "工作室自取",
+  deliveryLabel: "冷凍宅配",
+  bankName: "台新銀行",
+  bankCode: "812",
+  bankAccount: "2076 01 0001111666",
+  bankAccountName: "餐飲企業社",
+  footerText: "把餐廳等級的料理，帶進每一天的餐桌。",
 };
 
 export default function Home() {
@@ -163,7 +207,7 @@ export default function Home() {
     }
     if (!GOOGLE_SHEETS_ENDPOINT) {
       setNotice("訂單表尚未完成連接，請先透過 LINE 聯絡我們");
-      window.open(OFFICIAL_LINE_URL, "_blank", "noopener,noreferrer");
+      window.open(siteSettings.lineUrl || OFFICIAL_LINE_URL, "_blank", "noopener,noreferrer");
       return;
     }
 
@@ -216,7 +260,7 @@ export default function Home() {
       await navigator.clipboard?.writeText(lineMessage).catch(() => undefined);
       setNotice(`訂單 ${orderId} 已建立，請到 LINE 貼上並送出確認`);
       setCheckoutOpen(false);
-      window.open(OFFICIAL_LINE_URL, "_blank", "noopener,noreferrer");
+      window.open(siteSettings.lineUrl || OFFICIAL_LINE_URL, "_blank", "noopener,noreferrer");
     } catch {
       setNotice("訂單暫時無法送出，請改用 LINE 聯絡我們");
     } finally {
@@ -245,12 +289,9 @@ export default function Home() {
 
       <section id="top" className="hero">
         <div className="hero-copy">
-          <p className="kicker">餐廳級熟製 · 冷凍宅配</p>
-          <h1>KUANS LAB 寬私廚<br /><em>餐廳等級料理，在家也能輕鬆享用</em></h1>
-          <p className="hero-lead">
-            72 小時慢熬牛骨湯，厚切牛腱與現磨椒香。只要 12 分鐘，
-            讓忙碌的今晚也值得好好吃飯。
-          </p>
+          <p className="kicker">{siteSettings.heroKicker}</p>
+          <h1>{siteSettings.heroTitle1}<br /><em>{siteSettings.heroTitle2}</em></h1>
+          <p className="hero-lead">{siteSettings.heroIntro}</p>
           <div className="hero-actions">
             <a className="primary-cta" href="#menu">立即選購 <span>→</span></a>
             <span className="shipping-note">
@@ -258,7 +299,12 @@ export default function Home() {
             </span>
           </div>
         </div>
-        <div className="hero-image" role="img" aria-label="椒香紅燒牛肉麵">
+        <div
+          className="hero-image"
+          role="img"
+          aria-label="KUANS LAB 首頁主圖"
+          style={siteSettings.heroImageUrl ? { backgroundImage: `url("${siteSettings.heroImageUrl}")` } : undefined}
+        >
           <span className="stamp">人氣<br />No.1</span>
         </div>
       </section>
@@ -273,10 +319,10 @@ export default function Home() {
       <section id="menu" className="menu-section">
         <div className="section-heading">
           <div>
-            <p className="kicker">THIS MONTH&apos;S MENU</p>
-            <h2>今晚，你想吃哪一碗？</h2>
+            <p className="kicker">{siteSettings.menuKicker}</p>
+            <h2>{siteSettings.menuTitle}</h2>
           </div>
-          <p>湯肉包與生拉麵分裝，簡單覆熱，<br />也能吃到剛起鍋的口感。</p>
+          <p>{siteSettings.menuIntro}</p>
         </div>
 
         <div className="product-grid">
@@ -309,16 +355,16 @@ export default function Home() {
       <section id="story" className="story-section">
         <div className="story-quote">
           <span>“</span>
-          <h2>我們不賣匆忙的味道。</h2>
-          <p>從炒糖色、煸香辛料到牛骨慢熬，每一鍋都按照餐廳的節奏來。你負責把水煮滾，剩下的交給寬私廚。</p>
+          <h2>{siteSettings.storyTitle}</h2>
+          <p>{siteSettings.storyText}</p>
           <a href="#menu">認識這碗麵的誕生 →</a>
         </div>
         <div className="story-detail">
           <p className="vertical-label">KUANS LAB · PRIVATE KITCHEN</p>
           <div>
             <span className="mini-mark">寬</span>
-            <h3>把餐廳等級的料理，<br />帶進每一天的餐桌。</h3>
-            <p>私廚｜冷凍料理｜外燴服務</p>
+            <h3>{siteSettings.brandPromise}</h3>
+            <p>{siteSettings.brandSubtitle}</p>
           </div>
         </div>
       </section>
@@ -326,17 +372,17 @@ export default function Home() {
       <section id="services" className="services-section">
         <div className="services-intro">
           <p className="kicker">KUANS LAB SERVICE</p>
-          <h2>不只一碗麵，<br />也為你的餐桌掌廚。</h2>
-          <p>想預約私廚、規劃外燴，或詢問冷凍宅配？透過官方 LINE 告訴我們日期、人數與需求，由專人為你安排。</p>
+          <h2>{siteSettings.serviceTitle}</h2>
+          <p>{siteSettings.serviceIntro}</p>
         </div>
         <div className="service-links">
-          <a href="https://lin.ee/YO7Q3mL" target="_blank" rel="noreferrer">
+          <a href={siteSettings.lineUrl} target="_blank" rel="noreferrer">
             <span>01</span><div><b>私廚預約</b><small>到府料理與專屬菜單規劃</small></div><i>↗</i>
           </a>
-          <a href="https://lin.ee/YO7Q3mL" target="_blank" rel="noreferrer">
+          <a href={siteSettings.lineUrl} target="_blank" rel="noreferrer">
             <span>02</span><div><b>外燴服務</b><small>聚會、品牌活動與餐會服務</small></div><i>↗</i>
           </a>
-          <a className="line-service" href="https://lin.ee/YO7Q3mL" target="_blank" rel="noreferrer">
+          <a className="line-service" href={siteSettings.lineUrl} target="_blank" rel="noreferrer">
             <span>LINE</span><div><b>官方 LINE 客服</b><small>商品問題與訂單諮詢</small></div><i>↗</i>
           </a>
         </div>
@@ -356,8 +402,8 @@ export default function Home() {
 
       <footer>
         <div className="brand footer-brand"><span className="brand-mark">KL</span><span>KUANS LAB <b>寬私廚</b></span></div>
-        <p>把餐廳等級的料理，帶進每一天的餐桌。</p>
-        <div className="footer-links"><a href="#menu">冷凍宅配</a><a href="#services">外燴服務</a><a href="https://lin.ee/YO7Q3mL" target="_blank" rel="noreferrer">LINE 客服</a></div>
+        <p>{siteSettings.footerText}</p>
+        <div className="footer-links"><a href="#menu">{siteSettings.deliveryLabel}</a><a href="#services">外燴服務</a><a href={siteSettings.lineUrl} target="_blank" rel="noreferrer">LINE 客服</a></div>
         <small>© 2026 KUANS LAB. All rights reserved.</small>
       </footer>
 
@@ -411,10 +457,10 @@ export default function Home() {
                 <div className="bank-card">
                   <span className="bank-icon" aria-hidden="true">🧾</span>
                   <dl>
-                    <div><dt>銀行</dt><dd>台新銀行</dd></div>
-                    <div><dt>銀行代碼</dt><dd className="copy-value"><span>812</span><button type="button" aria-label="複製銀行代碼" onClick={() => copyBankValue("銀行代碼", "812")}>複製</button></dd></div>
-                    <div><dt>帳號</dt><dd className="copy-value account-number"><span>2076 01 0001111666</span><button type="button" aria-label="複製匯款帳號" onClick={() => copyBankValue("帳號", "2076010001111666")}>複製</button></dd></div>
-                    <div><dt>戶名</dt><dd>餐飲企業社</dd></div>
+                    <div><dt>銀行</dt><dd>{siteSettings.bankName}</dd></div>
+                    <div><dt>銀行代碼</dt><dd className="copy-value"><span>{siteSettings.bankCode}</span><button type="button" aria-label="複製銀行代碼" onClick={() => copyBankValue("銀行代碼", siteSettings.bankCode)}>複製</button></dd></div>
+                    <div><dt>帳號</dt><dd className="copy-value account-number"><span>{siteSettings.bankAccount}</span><button type="button" aria-label="複製匯款帳號" onClick={() => copyBankValue("帳號", siteSettings.bankAccount.replace(/\s/g, ""))}>複製</button></dd></div>
+                    <div><dt>戶名</dt><dd>{siteSettings.bankAccountName}</dd></div>
                     <div><dt>匯款金額</dt><dd className="copy-value transfer-amount"><span>NT$ {(subtotal + shipping).toLocaleString("zh-TW")}</span><button type="button" aria-label="複製匯款金額" onClick={() => copyBankValue("匯款金額", String(subtotal + shipping))}>複製</button></dd></div>
                   </dl>
                 </div>
@@ -424,8 +470,8 @@ export default function Home() {
             )}
           </div>
           <div className={`delivery-toggle ${checkoutOpen ? "locked" : ""}`}>
-            <button className={delivery === "宅配" ? "active" : ""} onClick={() => setDelivery("宅配")}>冷凍宅配</button>
-            <button className={delivery === "自取" ? "active" : ""} onClick={() => setDelivery("自取")}>工作室自取</button>
+            <button className={delivery === "宅配" ? "active" : ""} onClick={() => setDelivery("宅配")}>{siteSettings.deliveryLabel}</button>
+            <button className={delivery === "自取" ? "active" : ""} onClick={() => setDelivery("自取")}>{siteSettings.pickupLabel}</button>
           </div>
           <div className="totals">
             <span>{orderSummary}</span>
@@ -442,7 +488,7 @@ export default function Home() {
           </div>
         </aside>
       </div>
-      <a className="floating-line" href="https://lin.ee/YO7Q3mL" target="_blank" rel="noreferrer" aria-label="開啟 KUANS LAB 官方 LINE 客服">
+      <a className="floating-line" href={siteSettings.lineUrl} target="_blank" rel="noreferrer" aria-label="開啟 KUANS LAB 官方 LINE 客服">
         <b>LINE</b><span>客服</span>
       </a>
     </main>

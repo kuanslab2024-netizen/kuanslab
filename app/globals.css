@@ -80,7 +80,7 @@ h1 em { color: var(--orange); font-style: normal; }
 .product-info { padding: 25px; }
 .product-info > p { color: var(--orange); font-size: 11px; font-weight: 800; letter-spacing: .16em; margin-bottom: 10px; }
 .product-info h3 { font: 700 24px Georgia, "Noto Serif TC", serif; margin-bottom: 10px; }
-.product-info > span { color: #707a74; font-size: 13px; }
+.product-info > span { display: block; color: #707a74; font-size: 13px; line-height: 1.75; white-space: pre-line; }
 .price-row { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .price-row strong { font: 700 19px Georgia, serif; }
 .price-row button { border: 0; background: none; cursor: pointer; font-size: 12px; font-weight: 800; color: var(--green); }
